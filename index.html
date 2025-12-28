@@ -3,68 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koalla Triangular | Pro</title>
+    <title>Triangular FC 26 | Championship</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #6366f1; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #22c55e; --danger: #ef4444; }
-        * { box-sizing: border-box; transition: all 0.2s ease; }
-        body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; }
+        :root { --primary: #8b5cf6; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #10b981; --danger: #ef4444; }
+        * { box-sizing: border-box; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .container { max-width: 600px; width: 100%; }
         
-        /* Typography */
-        h1, h2 { text-align: center; color: var(--primary); letter-spacing: -1px; }
-        
-        /* Cards & Layout */
-        .card { background: var(--card); padding: 20px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); margin-bottom: 25px; border: 1px solid #334155; }
-        .hidden { display: none; }
+        h1 { text-align: center; color: var(--primary); font-size: 2rem; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; }
+        p.subtitle { text-align: center; color: #64748b; margin-bottom: 25px; font-size: 0.9rem; }
 
-        /* Inputs & Buttons */
+        .card { background: var(--card); padding: 20px; border-radius: 16px; border: 1px solid #334155; margin-bottom: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.4); }
+        .hidden { display: none !important; }
+
+        /* Setup Inputs */
         .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        input { background: #334155; border: 1px solid #475569; color: white; padding: 12px; border-radius: 8px; font-size: 1rem; }
-        button { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-weight: 700; width: 100%; }
-        button:hover { filter: brightness(1.2); transform: translateY(-2px); }
+        input { background: #0f172a; border: 1px solid #334155; color: white; padding: 12px; border-radius: 8px; width: 100%; }
+        input:focus { border-color: var(--primary); outline: none; }
+        
+        button { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: 800; width: 100%; text-transform: uppercase; }
+        button:active { transform: scale(0.98); }
 
-        /* Table */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; padding: 10px; border-bottom: 2px solid #334155; }
-        td { padding: 15px 10px; border-bottom: 1px solid #334155; }
-        .rank-1 { color: #fbbf24; font-weight: bold; }
+        /* Stats Table */
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { text-align: left; font-size: 0.75rem; color: #94a3b8; padding: 10px; border-bottom: 2px solid #334155; }
+        td { padding: 12px 10px; border-bottom: 1px solid #334155; font-size: 0.95rem; }
+        .row-winner { color: var(--accent); font-weight: bold; }
 
-        /* Matches Grid */
-        .matches-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
-        .match-card { background: #0f172a; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid var(--primary); }
-        .match-card span { font-size: 0.9rem; font-weight: 500; }
-        .score-input { width: 45px; text-align: center; font-weight: bold; font-size: 1.1rem; border-color: var(--primary); padding: 5px; }
+        /* Matches */
+        .match-card { background: #161e2e; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+        .team-name { flex: 1; font-size: 0.85rem; font-weight: 600; }
+        .score-box { display: flex; gap: 5px; align-items: center; }
+        .score-input { width: 45px; text-align: center; background: var(--bg); border: 1px solid var(--primary); color: white; padding: 8px 0; border-radius: 6px; font-weight: bold; }
 
-        .badge { background: #334155; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; margin-top: 4px; display: inline-block; }
+        #error-msg { background: var(--danger); color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>⚽ Koalla Triangular</h1>
+    <h1>Triangular FC 26</h1>
+    <p class="subtitle">Championship Management System</p>
+
+    <div id="error-msg" class="hidden"></div>
 
     <div id="setup-view" class="card hidden">
-        <h2>Novo Campeonato</h2>
+        <h3 style="margin-top:0">Configurar Jogadores</h3>
         <div id="setup-inputs"></div>
-        <button onclick="startTournament()">Criar Chaveamento</button>
+        <button onclick="startTournament()">Iniciar Campeonato</button>
     </div>
 
     <div id="main-view" class="hidden">
         <div class="card">
-            <h2>Classificação</h2>
+            <h3 style="margin:0 0 10px 0">Classificação</h3>
             <table>
-                <thead>
-                    <tr><th>Player / Time</th><th>PTS</th><th>V</th><th>SG</th></tr>
-                </thead>
+                <thead><tr><th>PLAYER</th><th>PTS</th><th>V</th><th>SG</th></tr></thead>
                 <tbody id="standings-body"></tbody>
             </table>
         </div>
 
-        <h2>Confrontos</h2>
-        <div id="matches-list" class="matches-grid"></div>
+        <h3 style="margin-left: 10px;">Partidas (Ida e Volta)</h3>
+        <div id="matches-list"></div>
         
-        <button onclick="resetApp()" style="background: var(--danger); margin-top: 40px; font-size: 0.8rem; opacity: 0.6;">Resetar Campeonato</button>
+        <button onclick="resetApp()" style="background: transparent; color: var(--danger); border: 1px solid var(--danger); margin-top: 30px; font-size: 0.7rem;">Resetar Dados</button>
     </div>
 </div>
 
@@ -77,14 +79,24 @@
     let matches = [];
 
     async function init() {
-        const { data: pData } = await _supabase.from('jogadores').select('*').order('id');
-        players = pData;
+        try {
+            // Tenta buscar os jogadores
+            const { data, error } = await _supabase.from('jogadores').select('*').order('id');
+            
+            if (error) throw error;
+            
+            players = data;
 
-        // Se o primeiro jogador não tem nome, mostra o setup
-        if (!players[0].nome) {
-            showSetup();
-        } else {
-            loadDashboard();
+            // Se não encontrar dados ou o primeiro jogador estiver sem nome
+            if (!players || players.length === 0 || !players[0].nome) {
+                showSetup();
+            } else {
+                loadDashboard();
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById('error-msg').classList.remove('hidden');
+            document.getElementById('error-msg').innerHTML = `<strong>Erro de Conexão:</strong> Certifique-se de que as tabelas existem no Supabase.<br><small>${err.message}</small>`;
         }
     }
 
@@ -102,23 +114,21 @@
     async function startTournament() {
         const updates = [0,1,2].map(i => ({
             id: i,
-            nome: document.getElementById(`p${i}-name`).value || `Player ${i+1}`,
+            nome: document.getElementById(`p${i}-name`).value || `Jogador ${i+1}`,
             time: document.getElementById(`p${i}-team`).value || `Time ${i+1}`
         }));
 
-        await _supabase.from('jogadores').upsert(updates);
-        location.reload();
+        const { error } = await _supabase.from('jogadores').upsert(updates);
+        if (error) alert("Erro ao salvar: " + error.message);
+        else location.reload();
     }
 
     async function loadDashboard() {
         document.getElementById('main-view').classList.remove('hidden');
-        const { data: mData } = await _supabase.from('partidas').select('*').order('id');
-        matches = mData;
-        renderAll();
+        await fetchScores();
 
-        // Realtime: Escuta mudanças de qualquer pessoa
-        _supabase.channel('custom-all-channel')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'partidas' }, () => {
+        // Realtime Subscription
+        _supabase.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: 'partidas' }, payload => {
             fetchScores();
         }).subscribe();
     }
@@ -142,6 +152,7 @@
             if (m.score_h !== null && m.score_a !== null) {
                 const h = stats.find(s => s.id === m.home_id);
                 const a = stats.find(s => s.id === m.away_id);
+                if(!h || !a) return;
 
                 h.sg += (m.score_h - m.score_a);
                 a.sg += (m.score_a - m.score_h);
@@ -152,44 +163,36 @@
             }
         });
 
-        // Ordenação: Pontos -> Saldo -> Vitórias
         return stats.sort((a,b) => b.pts - a.pts || b.sg - a.sg || b.v - a.v);
     }
 
     function renderAll() {
-        // Render Tabela
         const sorted = calculateStandings();
         document.getElementById('standings-body').innerHTML = sorted.map((p, i) => `
-            <tr class="${i===0 ? 'rank-1' : ''}">
-                <td>${p.nome} <br> <span class="badge">${p.time}</span></td>
+            <tr class="${i===0 && p.pts > 0 ? 'row-winner' : ''}">
+                <td>${p.nome}<br><span style="font-size:0.7rem; color:#94a3b8">${p.time}</span></td>
                 <td>${p.pts}</td>
                 <td>${p.v}</td>
                 <td>${p.sg}</td>
             </tr>
         `).join('');
 
-        // Render Jogos
         document.getElementById('matches-list').innerHTML = matches.map(m => `
             <div class="match-card">
-                <div style="flex:1; text-align:right">
-                    <span>${players[m.home_id].nome}</span>
+                <div class="team-name" style="text-align:right">${players[m.home_id].nome}</div>
+                <div class="score-box">
+                    <input type="number" class="score-input" value="${m.score_h ?? ''}" onchange="updateScore(${m.id}, 'score_h', this.value)">
+                    <span style="color:var(--primary); font-weight:bold">X</span>
+                    <input type="number" class="score-input" value="${m.score_a ?? ''}" onchange="updateScore(${m.id}, 'score_a', this.value)">
                 </div>
-                <div style="display:flex; gap:5px; margin: 0 10px">
-                    <input type="number" class="score-input" value="${m.score_h ?? ''}" 
-                        onchange="updateScore(${m.id}, 'score_h', this.value)">
-                    <input type="number" class="score-input" value="${m.score_a ?? ''}" 
-                        onchange="updateScore(${m.id}, 'score_a', this.value)">
-                </div>
-                <div style="flex:1; text-align:left">
-                    <span>${players[m.away_id].nome}</span>
-                </div>
+                <div class="team-name" style="text-align:left; margin-left: 10px;">${players[m.away_id].nome}</div>
             </div>
         `).join('');
     }
 
     async function resetApp() {
-        if(confirm("Isso apagará todos os nomes e placares. Confirmar?")) {
-            await _supabase.from('jogadores').update({ nome: '', time: '' }).neq('id', 100);
+        if(confirm("Deseja resetar o campeonato Triangular FC 26?")) {
+            await _supabase.from('jogadores').update({ nome: '', time: '' }).neq('id', 999);
             await _supabase.from('partidas').update({ score_h: null, score_a: null }).neq('id', 0);
             location.reload();
         }
