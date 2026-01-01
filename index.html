@@ -7,35 +7,45 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #00f2ff; --secondary: #7000ff; --bg: #05070a; --card: rgba(255, 255, 255, 0.05); --text: #ffffff; --gold: #ffcf4d; }
+        :root { --primary: #00f2ff; --secondary: #7000ff; --bg: #05070a; --card: rgba(255, 255, 255, 0.05); --text: #ffffff; --gold: #ffcf4d; --danger: #ff4444; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: radial-gradient(circle at top right, #111, var(--bg)); color: var(--text); margin: 0; padding: 15px; min-height: 100vh; font-size: 1.1rem; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: radial-gradient(circle at top right, #111, var(--bg)); color: var(--text); margin: 0; padding: 15px; min-height: 100vh; }
         .container { max-width: 500px; margin: 0 auto; padding-bottom: 50px; }
+        
+        /* Feedback Toast */
+        #status-msg { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; padding: 15px 25px; border-radius: 12px; font-weight: 600; text-align: center; width: 90%; max-width: 400px; display: none; }
+        .msg-success { background: #00ff88; color: #000; }
+        .msg-error { background: var(--danger); color: #fff; }
+
         header { text-align: center; margin-bottom: 30px; }
-        h1 { font-size: 2.2rem; margin: 0; text-transform: uppercase; letter-spacing: -1px; color: var(--primary); text-shadow: 0 0 15px rgba(0,242,255,0.4); }
+        h1 { font-size: 2.2rem; margin: 0; text-transform: uppercase; letter-spacing: -1px; color: var(--primary); }
         .card { background: var(--card); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 20px; }
+        
+        /* Setup Estilizado */
         .setup-player { margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px; }
         .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
-        .team-opt { background: rgba(255,255,255,0.03); border: 2px solid transparent; border-radius: 16px; padding: 10px; text-align: center; cursor: pointer; transition: 0.3s; }
-        .team-opt img { width: 45px; height: 45px; object-fit: contain; filter: grayscale(1); opacity: 0.5; }
+        .team-opt { background: rgba(255,255,255,0.03); border: 2px solid transparent; border-radius: 16px; padding: 10px; text-align: center; cursor: pointer; }
+        .team-opt img { width: 45px; height: 45px; object-fit: contain; }
         .team-opt.selected { border-color: var(--primary); background: rgba(0, 242, 255, 0.1); }
-        .team-opt.selected img { filter: grayscale(0); opacity: 1; transform: scale(1.1); }
+
+        /* Tabela */
         .table-pro { width: 100%; border-collapse: collapse; }
-        .table-pro th { font-size: 0.75rem; color: #666; padding: 10px; text-align: center; }
         .table-pro td { padding: 12px 5px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.03); }
         .team-cell { display: flex; align-items: center; gap: 12px; text-align: left !important; font-weight: 800; }
-        .team-cell img { width: 32px; height: 32px; object-fit: contain; }
+        .team-cell img { width: 32px; height: 32px; }
+
+        /* Partidas */
         .match-item { display: flex; align-items: center; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .score-wrap { display: flex; align-items: center; gap: 5px; background: #000; padding: 6px; border-radius: 12px; border: 1px solid #333; }
-        .score-input { width: 42px; height: 42px; background: transparent; border: none; color: white; text-align: center; font-size: 1.3rem; font-weight: 800; outline: none; }
-        .btn-save { background: var(--primary); color: #000; border: none; width: 42px; height: 42px; border-radius: 12px; font-weight: 800; cursor: pointer; margin-left: 8px; }
+        .score-input { width: 42px; height: 42px; background: transparent; border: none; color: white; text-align: center; font-size: 1.3rem; font-weight: 800; }
+        
         .btn-main { background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white; border: none; padding: 20px; border-radius: 20px; width: 100%; font-weight: 800; font-size: 1.2rem; cursor: pointer; }
         .hidden { display: none !important; }
-        .hall-item { display: flex; align-items: center; gap: 15px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .hall-item img { width: 40px; height: 40px; }
     </style>
 </head>
 <body>
+
+<div id="status-msg"></div>
 
 <div class="container">
     <header><h1>Triangular FC 26</h1></header>
@@ -43,19 +53,19 @@
     <div id="setup-view" class="card hidden">
         <h3 style="text-align:center; margin-top:0">Nova Temporada</h3>
         <div id="setup-content"></div>
-        <button class="btn-main" onclick="confirmSetup()">INICIAR ARENA</button>
+        <button class="btn-main" onclick="confirmSetup()">SALVAR E INICIAR</button>
     </div>
 
     <div id="main-view" class="hidden">
         <div class="card">
             <table class="table-pro">
-                <thead><tr><th style="text-align:left">TIME</th><th>P</th><th>V</th><th>SG</th></tr></thead>
+                <thead><tr><th style="text-align:left; font-size:0.7rem; color:#666">TIME</th><th>P</th><th>V</th><th>SG</th></tr></thead>
                 <tbody id="standings-body"></tbody>
             </table>
         </div>
 
         <div id="final-btn-area" class="hidden">
-            <button class="btn-main" style="background:var(--gold); color:black; margin-bottom:25px" onclick="goFinal()">🔥 GRANDE FINAL</button>
+            <button class="btn-main" style="background:var(--gold); color:black; margin-bottom:25px" onclick="goFinal()">🔥 JOGAR GRANDE FINAL</button>
         </div>
         <div id="final-match-area"></div>
 
@@ -66,7 +76,7 @@
             <div id="hall-list"></div>
         </div>
 
-        <button onclick="resetAll()" style="background:none; border:none; color:#444; width:100%; margin-top:30px; cursor:pointer; font-weight:600">REINICIAR TODO O SISTEMA</button>
+        <button onclick="resetAll()" style="background:none; border:none; color:#555; width:100%; margin-top:30px; cursor:pointer; font-weight:bold">REINICIAR BANCO DE DADOS</button>
     </div>
 </div>
 
@@ -86,18 +96,23 @@
 
     let players = [], matches = [], selectedTeams = [null, null, null];
 
-    async function init() {
-        const { data } = await _supabase.from('jogadores').select('*').order('id');
-        players = data || [];
+    function showFeedback(text, isError = false) {
+        const el = document.getElementById('status-msg');
+        el.innerText = text;
+        el.className = isError ? 'msg-error' : 'msg-success';
+        el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 4000);
+    }
 
-        // LÓGICA DE DETECÇÃO REFORMULADA: Se qualquer player estiver nulo ou vazio, abre o Setup
+    async function init() {
+        const { data, error } = await _supabase.from('jogadores').select('*').order('id');
+        if (error) return showFeedback("Erro ao carregar banco: " + error.message, true);
+        
+        players = data || [];
         const needsSetup = !players.length || players.some(p => !p.nome || p.nome.trim() === "");
         
-        if (needsSetup) {
-            renderSetup();
-        } else {
-            loadDashboard();
-        }
+        if (needsSetup) renderSetup();
+        else loadDashboard();
     }
 
     function renderSetup() {
@@ -122,13 +137,14 @@
     }
 
     async function confirmSetup() {
-        if(selectedTeams.includes(null)) return alert("Escolha os times para todos os jogadores!");
+        if(selectedTeams.includes(null)) return alert("Escolha os times!");
         const updates = [0,1,2].map(i => ({
             id: i, nome: document.getElementById(`p${i}-name`).value || `P${i+1}`,
             time: selectedTeams[i].name, logo: selectedTeams[i].logo
         }));
         const { error } = await _supabase.from('jogadores').upsert(updates);
         if(!error) location.reload();
+        else showFeedback("Erro no Banco: " + error.message, true);
     }
 
     async function loadDashboard() {
@@ -164,7 +180,6 @@
     }
 
     function renderDashboard() {
-        if(!players.length || !players[0].nome) return;
         const sorted = calculateStandings();
         document.getElementById('standings-body').innerHTML = sorted.map((p, i) => `
             <tr><td class="team-cell"><img src="${p.logo||''}"><div>${p.time||'---'}<br><small>${p.nome||''}</small></div></td>
@@ -179,14 +194,13 @@
             const h = players.find(p => p.id === final.home_id), a = players.find(p => p.id === final.away_id);
             if(h && a) document.getElementById('final-match-area').innerHTML = `
                 <div class="card" style="border:1px solid var(--gold); background: rgba(255,207,77,0.05)">
-                <div style="text-align:center; color:var(--gold); font-weight:800; font-size:0.8rem; margin-bottom:10px">GRAND FINAL</div>
                 ${renderMatchCard(final)}${final.score_h !== null ? `<div style="text-align:center; padding-top:15px; color:var(--gold); font-weight:900">👑 ${getWinner(final)} CAMPEÃO</div>` : ''}</div>`;
         }
     }
 
     function renderMatchCard(m) {
         const h = players.find(p => p.id === m.home_id), a = players.find(p => p.id === m.away_id);
-        if(!h || !h.nome || !a || !a.nome) return '';
+        if(!h || !a) return '';
         return `<div class="match-item"><div style="flex:1; text-align:right; font-weight:800; font-size:0.85rem">${h.time}</div>
             <div class="score-wrap"><input type="number" id="h-${m.id}" class="score-input" value="${m.score_h ?? ''}"><span>X</span>
             <input type="number" id="a-${m.id}" class="score-input" value="${m.score_a ?? ''}"></div>
@@ -220,20 +234,25 @@
     }
 
     async function resetAll() {
-        if(confirm("Deseja salvar o campeão e RESETAR TUDO agora?")) {
-            // Salva campeão antes de limpar
-            const final = matches.find(m => m.id === 7);
-            if(final && final.score_h !== null) {
-                const winId = final.score_h > final.score_a ? final.home_id : (final.score_a > final.score_h ? final.away_id : null);
-                const champ = players.find(p => p.id === winId);
-                if(champ) await _supabase.from('hall_da_fama').insert({ vencedor_nome: champ.nome, vencedor_time: champ.time, vencedor_logo: champ.logo });
+        if(confirm("Deseja apagar os dados do banco e resetar?")) {
+            showFeedback("Processando reset no Supabase...");
+            
+            // 1. Limpa Jogadores (Tabela public.jogadores)
+            const { error: errP } = await _supabase.from('jogadores')
+                .update({ nome: null, time: null, logo: null })
+                .in('id', [0, 1, 2]);
+
+            // 2. Limpa Partidas
+            const { error: errM } = await _supabase.from('partidas')
+                .update({ score_h: null, score_a: null, home_id: null, away_id: null })
+                .in('id', [1, 2, 3, 4, 5, 6, 7]);
+
+            if (errP || errM) {
+                showFeedback("Erro ao apagar: " + (errP?.message || errM?.message), true);
+            } else {
+                showFeedback("Banco limpo com sucesso! Recarregando...");
+                setTimeout(() => location.reload(), 1500);
             }
-            
-            // RESET NUCLEAR: Define TUDO como nulo
-            await _supabase.from('jogadores').update({ nome: null, time: null, logo: null }).neq('id', -1);
-            await _supabase.from('partidas').update({ score_h: null, score_a: null, home_id: null, away_id: null }).neq('id', -1);
-            
-            location.reload();
         }
     }
     init();
