@@ -41,7 +41,7 @@
     <header><h1>Triangular FC 26</h1></header>
 
     <div id="setup-view" class="card hidden">
-        <h3 style="text-align:center; margin-top:0">Nova Arena</h3>
+        <h3 style="text-align:center; margin-top:0">Nova Temporada</h3>
         <div id="setup-content"></div>
         <button class="btn-main" onclick="confirmSetup()">INICIAR TORNEIO</button>
     </div>
@@ -87,10 +87,16 @@
     let players = [], matches = [], selectedTeams = [null, null, null];
 
     async function init() {
+        // Busca jogadores e garante que temos os 3 IDs
         const { data } = await _supabase.from('jogadores').select('*').order('id');
         players = data || [];
-        if (!players.length || !players[0].nome) renderSetup();
-        else loadDashboard();
+
+        // Lógica Corrigida: Se não houver jogadores OU o primeiro estiver sem nome
+        if (!players.length || players.some(p => !p.nome || p.nome.trim() === "")) {
+            renderSetup();
+        } else {
+            loadDashboard();
+        }
     }
 
     function renderSetup() {
@@ -157,10 +163,10 @@
     }
 
     function renderDashboard() {
-        if(!players.length) return;
+        if(!players.length || !players[0].nome) return; // Evita erro se o banco estiver em processo de reset
         const sorted = calculateStandings();
         document.getElementById('standings-body').innerHTML = sorted.map((p, i) => `
-            <tr><td class="team-cell"><img src="${p.logo||''}" onerror="this.style.display='none'"><div>${p.time||'---'}<br><small>${p.nome||''}</small></div></td>
+            <tr><td class="team-cell"><img src="${p.logo||''}"><div>${p.time||'---'}<br><small>${p.nome||''}</small></div></td>
             <td style="color:var(--primary); font-weight:800">${p.pts}</td><td>${p.v}</td><td>${p.sg}</td></tr>`).join('');
 
         const group = matches.filter(m => m.id <= 6);
@@ -179,7 +185,7 @@
 
     function renderMatchCard(m) {
         const h = players.find(p => p.id === m.home_id), a = players.find(p => p.id === m.away_id);
-        if(!h || !a) return '';
+        if(!h || !h.nome || !a || !a.nome) return ''; // Bloqueia renderização de partidas vazias
         return `<div class="match-item"><div style="flex:1; text-align:right; font-weight:800; font-size:0.85rem">${h.time}</div>
             <div class="score-wrap"><input type="number" id="h-${m.id}" class="score-input" value="${m.score_h ?? ''}"><span>X</span>
             <input type="number" id="a-${m.id}" class="score-input" value="${m.score_a ?? ''}"></div>
@@ -198,6 +204,7 @@
                 else { h.pts += 1; a.pts += 1; } }
             }
         });
+        // Lógica: Pontos -> Vitórias -> Saldo de Gols
         return stats.sort((a,b) => b.pts - a.pts || b.v - a.v || b.sg - a.sg);
     }
 
@@ -213,13 +220,14 @@
     }
 
     async function resetAll() {
-        if(confirm("Deseja salvar o campeão no Hall da Fama e resetar?")) {
+        if(confirm("Salvar campeão no Hall da Fama e resetar?")) {
             const final = matches.find(m => m.id === 7);
             if(final && final.score_h !== null) {
                 const winId = final.score_h > final.score_a ? final.home_id : (final.score_a > final.score_h ? final.away_id : null);
                 const champ = players.find(p => p.id === winId);
                 if(champ) await _supabase.from('hall_da_fama').insert({ vencedor_nome: champ.nome, vencedor_time: champ.time, vencedor_logo: champ.logo });
             }
+            // Reset forçando strings vazias e IDs específicos
             await _supabase.from('jogadores').update({ nome: '', time: '', logo: '' }).in('id', [0,1,2]);
             await _supabase.from('partidas').update({ score_h: null, score_a: null, home_id: null, away_id: null }).in('id', [1,2,3,4,5,6,7]);
             location.reload();
