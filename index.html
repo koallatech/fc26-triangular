@@ -7,62 +7,32 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #00f2ff;
-            --secondary: #7000ff;
-            --bg: #05070a;
-            --card: rgba(255, 255, 255, 0.05);
-            --text: #ffffff;
-            --accent: #ffcf4d;
-        }
-
+        :root { --primary: #00f2ff; --secondary: #7000ff; --bg: #05070a; --card: rgba(255, 255, 255, 0.05); --text: #ffffff; --gold: #ffcf4d; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: radial-gradient(circle at top right, #111, var(--bg)); 
-            color: var(--text); margin: 0; padding: 15px; min-height: 100vh;
-        }
-
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: radial-gradient(circle at top right, #111, var(--bg)); color: var(--text); margin: 0; padding: 15px; min-height: 100vh; font-size: 1.1rem; }
         .container { max-width: 500px; margin: 0 auto; padding-bottom: 50px; }
         header { text-align: center; margin-bottom: 30px; }
         h1 { font-size: 2.2rem; margin: 0; text-transform: uppercase; letter-spacing: -1px; color: var(--primary); text-shadow: 0 0 15px rgba(0,242,255,0.4); }
-
-        .card { 
-            background: var(--card); backdrop-filter: blur(15px);
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 24px;
-            padding: 20px; margin-bottom: 20px;
-        }
-
-        /* Seleção Visual de Times */
+        .card { background: var(--card); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 20px; }
         .setup-player { margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px; }
         .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
-        .team-opt {
-            background: rgba(255,255,255,0.03); border: 2px solid transparent;
-            border-radius: 16px; padding: 10px; text-align: center; cursor: pointer; transition: 0.3s;
-        }
-        .team-opt img { width: 45px; height: 45px; object-fit: contain; filter: grayscale(1); opacity: 0.6; }
+        .team-opt { background: rgba(255,255,255,0.03); border: 2px solid transparent; border-radius: 16px; padding: 10px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .team-opt img { width: 45px; height: 45px; object-fit: contain; filter: grayscale(1); opacity: 0.5; }
         .team-opt.selected { border-color: var(--primary); background: rgba(0, 242, 255, 0.1); }
         .team-opt.selected img { filter: grayscale(0); opacity: 1; transform: scale(1.1); }
-        .team-opt span { display: block; font-size: 0.7rem; margin-top: 5px; color: #888; }
-
-        /* Tabela Profissional com Logos */
         .table-pro { width: 100%; border-collapse: collapse; }
         .table-pro th { font-size: 0.75rem; color: #666; padding: 10px; text-align: center; }
-        .table-pro td { padding: 12px 5px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 1rem; }
+        .table-pro td { padding: 12px 5px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.03); }
         .team-cell { display: flex; align-items: center; gap: 12px; text-align: left !important; font-weight: 800; }
         .team-cell img { width: 32px; height: 32px; object-fit: contain; }
-        .team-cell small { font-weight: 400; color: #666; font-size: 0.75rem; }
-
-        /* Placar de Jogos */
         .match-item { display: flex; align-items: center; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .score-wrap { display: flex; align-items: center; gap: 5px; background: #000; padding: 6px; border-radius: 12px; border: 1px solid #333; }
         .score-input { width: 42px; height: 42px; background: transparent; border: none; color: white; text-align: center; font-size: 1.3rem; font-weight: 800; outline: none; }
-        .btn-save { background: var(--primary); color: #000; border: none; width: 42px; height: 42px; border-radius: 12px; font-weight: 800; cursor: pointer; margin-left: 8px; font-size: 1rem; }
-
-        .btn-main { background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white; border: none; padding: 20px; border-radius: 20px; width: 100%; font-weight: 800; font-size: 1.2rem; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .btn-save { background: var(--primary); color: #000; border: none; width: 42px; height: 42px; border-radius: 12px; font-weight: 800; cursor: pointer; margin-left: 8px; }
+        .btn-main { background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white; border: none; padding: 20px; border-radius: 20px; width: 100%; font-weight: 800; font-size: 1.2rem; cursor: pointer; }
         .hidden { display: none !important; }
-
-        .final-badge { text-align: center; color: var(--accent); font-weight: 800; letter-spacing: 2px; font-size: 0.9rem; margin-bottom: 15px; }
+        .hall-item { display: flex; align-items: center; gap: 15px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .hall-item img { width: 40px; height: 40px; }
     </style>
 </head>
 <body>
@@ -71,9 +41,9 @@
     <header><h1>Triangular FC 26</h1></header>
 
     <div id="setup-view" class="card hidden">
-        <h3 style="text-align:center; margin-top:0">Configuração do Torneio</h3>
+        <h3 style="text-align:center; margin-top:0">Nova Arena</h3>
         <div id="setup-content"></div>
-        <button class="btn-main" onclick="confirmSetup()">INICIAR ARENA</button>
+        <button class="btn-main" onclick="confirmSetup()">INICIAR TORNEIO</button>
     </div>
 
     <div id="main-view" class="hidden">
@@ -85,17 +55,18 @@
         </div>
 
         <div id="final-btn-area" class="hidden">
-            <button class="btn-main" style="background:#ffcf4d; color:black; margin-bottom:25px" onclick="goFinal()">🔥 JOGAR GRANDE FINAL</button>
+            <button class="btn-main" style="background:var(--gold); color:black; margin-bottom:25px" onclick="goFinal()">🔥 GRANDE FINAL</button>
         </div>
-
         <div id="final-match-area"></div>
 
-        <div class="card">
-            <h4 style="margin:0 0 15px 0; font-size: 0.8rem; color: #444; text-transform: uppercase;">Jogos do Triangular</h4>
-            <div id="matches-list"></div>
+        <div class="card"><div id="matches-list"></div></div>
+        
+        <div id="hall-card" class="card hidden">
+            <h4 style="margin:0 0 15px 0; color:var(--gold)">🏆 HALL DA FAMA</h4>
+            <div id="hall-list"></div>
         </div>
 
-        <button onclick="resetAll()" style="background:none; border:none; color:#333; width:100%; font-size:0.75rem; margin-top:30px; cursor:pointer">REINICIAR DATABASE</button>
+        <button onclick="resetAll()" style="background:none; border:none; color:#333; width:100%; margin-top:30px; cursor:pointer">RESETAR CAMPEONATO</button>
     </div>
 </div>
 
@@ -117,28 +88,22 @@
 
     async function init() {
         const { data } = await _supabase.from('jogadores').select('*').order('id');
-        players = data;
-        if (!players || !players[0].nome) renderSetup();
+        players = data || [];
+        if (!players.length || !players[0].nome) renderSetup();
         else loadDashboard();
     }
 
     function renderSetup() {
         document.getElementById('setup-view').classList.remove('hidden');
+        document.getElementById('main-view').classList.add('hidden');
         let html = '';
         for(let i=0; i<3; i++) {
-            html += `
-                <div class="setup-player">
-                    <label>PLAYER ${i+1}</label>
-                    <input type="text" id="p${i}-name" placeholder="Nome do Jogador" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #333; color:white; padding:12px; border-radius:12px; margin-bottom:10px;">
-                    <div class="team-grid">
-                        ${availableTeams.map((t, idx) => `
-                            <div class="team-opt" id="p${i}-t${idx}" onclick="selectTeam(${i}, '${t.name}', '${t.logo}', 'p${i}-t${idx}')">
-                                <img src="${t.logo}" onerror="this.src='https://via.placeholder.com/40?text=?'">
-                                <span>${t.name}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>`;
+            html += `<div class="setup-player"><label>PLAYER ${i+1}</label>
+                <input type="text" id="p${i}-name" placeholder="Nome" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #333; color:white; padding:12px; border-radius:12px; margin-bottom:10px;">
+                <div class="team-grid">${availableTeams.map((t, idx) => `
+                    <div class="team-opt" id="p${i}-t${idx}" onclick="selectTeam(${i}, '${t.name}', '${t.logo}', 'p${i}-t${idx}')">
+                        <img src="${t.logo}" onerror="this.src='https://via.placeholder.com/40'"><span>${t.name}</span>
+                    </div>`).join('')}</div></div>`;
         }
         document.getElementById('setup-content').innerHTML = html;
     }
@@ -161,72 +126,65 @@
 
     async function loadDashboard() {
         document.getElementById('main-view').classList.remove('hidden');
+        document.getElementById('setup-view').classList.add('hidden');
         await syncData();
+        fetchHall();
     }
 
     async function syncData() {
         const { data: pData } = await _supabase.from('jogadores').select('*').order('id');
         const { data: mData } = await _supabase.from('partidas').select('*').order('id');
-        players = pData; matches = mData;
+        players = pData || []; matches = mData || [];
         renderDashboard();
+    }
+
+    async function fetchHall() {
+        const { data } = await _supabase.from('hall_da_fama').select('*').order('data', { ascending: false });
+        if(data && data.length) {
+            document.getElementById('hall-card').classList.remove('hidden');
+            document.getElementById('hall-list').innerHTML = data.map(h => `
+                <div class="hall-item"><img src="${h.vencedor_logo}">
+                <div><strong>${h.vencedor_time}</strong><br><small>${h.vencedor_nome} - ${new Date(h.data).toLocaleDateString()}</small></div></div>
+            `).join('');
+        }
     }
 
     async function updateScore(id) {
         const h = document.getElementById(`h-${id}`).value;
         const a = document.getElementById(`a-${id}`).value;
-        const { error } = await _supabase.from('partidas').update({
-            score_h: h === "" ? null : parseInt(h),
-            score_a: a === "" ? null : parseInt(a)
-        }).eq('id', id);
-        
-        if(!error) syncData(); // Recarrega dados e renderiza sem dar F5
+        await _supabase.from('partidas').update({ score_h: h===""?null:parseInt(h), score_a: a===""?null:parseInt(a) }).eq('id', id);
+        syncData();
     }
 
     function renderDashboard() {
+        if(!players.length) return;
         const sorted = calculateStandings();
         document.getElementById('standings-body').innerHTML = sorted.map((p, i) => `
-            <tr>
-                <td class="team-cell">
-                    <img src="${p.logo}" onerror="this.src='https://via.placeholder.com/30'"> 
-                    <div>${p.time}<br><small>${p.nome}</small></div>
-                </td>
-                <td style="color:var(--primary); font-weight:800; font-size:1.1rem">${p.pts}</td>
-                <td>${p.v}</td>
-                <td style="color:${p.sg >= 0 ? '#00ff88' : '#ff4444'}">${p.sg}</td>
-            </tr>`).join('');
+            <tr><td class="team-cell"><img src="${p.logo||''}" onerror="this.style.display='none'"><div>${p.time||'---'}<br><small>${p.nome||''}</small></div></td>
+            <td style="color:var(--primary); font-weight:800">${p.pts}</td><td>${p.v}</td><td>${p.sg}</td></tr>`).join('');
 
         const group = matches.filter(m => m.id <= 6);
         document.getElementById('matches-list').innerHTML = group.map(m => renderMatchCard(m)).join('');
-
-        // Se todos os 6 jogos do grupo foram preenchidos, mostra o botão da final
-        if(group.filter(m => m.score_h !== null).length >= 6) {
-            document.getElementById('final-btn-area').classList.remove('hidden');
-        }
+        if(group.filter(m => m.score_h !== null).length >= 6) document.getElementById('final-btn-area').classList.remove('hidden');
 
         const final = matches.find(m => m.id === 7);
         if(final && final.home_id !== null) {
-            document.getElementById('final-match-area').innerHTML = `
-                <div class="card" style="border:1px solid #ffcf4d; background: rgba(255, 207, 77, 0.05)">
-                    <div class="final-badge">GRAND FINAL</div>
-                    ${renderMatchCard(final)}
-                    ${final.score_h !== null ? `<div style="text-align:center; padding:15px; color:#ffcf4d; font-weight:900; font-size:1.4rem">👑 ${getWinner(final)} CAMPEÃO</div>` : ''}
-                </div>`;
+            const h = players.find(p => p.id === final.home_id), a = players.find(p => p.id === final.away_id);
+            if(h && a) document.getElementById('final-match-area').innerHTML = `
+                <div class="card" style="border:1px solid var(--gold); background: rgba(255,207,77,0.05)">
+                <div style="text-align:center; color:var(--gold); font-weight:800; font-size:0.8rem; margin-bottom:10px">GRAND FINAL</div>
+                ${renderMatchCard(final)}${final.score_h !== null ? `<div style="text-align:center; padding-top:15px; color:var(--gold); font-weight:900">👑 ${getWinner(final)} CAMPEÃO</div>` : ''}</div>`;
         }
     }
 
     function renderMatchCard(m) {
         const h = players.find(p => p.id === m.home_id), a = players.find(p => p.id === m.away_id);
-        return `
-            <div class="match-item">
-                <div style="flex:1; text-align:right; font-weight:800; font-size:0.85rem">${h.time}</div>
-                <div class="score-wrap">
-                    <input type="number" id="h-${m.id}" class="score-input" value="${m.score_h ?? ''}">
-                    <span style="color:#444; font-weight:900">X</span>
-                    <input type="number" id="a-${m.id}" class="score-input" value="${m.score_a ?? ''}">
-                </div>
-                <div style="flex:1; text-align:left; font-weight:800; font-size:0.85rem; margin-left:10px">${a.time}</div>
-                <button class="btn-save" onclick="updateScore(${m.id})">✓</button>
-            </div>`;
+        if(!h || !a) return '';
+        return `<div class="match-item"><div style="flex:1; text-align:right; font-weight:800; font-size:0.85rem">${h.time}</div>
+            <div class="score-wrap"><input type="number" id="h-${m.id}" class="score-input" value="${m.score_h ?? ''}"><span>X</span>
+            <input type="number" id="a-${m.id}" class="score-input" value="${m.score_a ?? ''}"></div>
+            <div style="flex:1; text-align:left; font-weight:800; font-size:0.85rem; margin-left:10px">${a.time}</div>
+            <button class="btn-save" onclick="updateScore(${m.id})">✓</button></div>`;
     }
 
     function calculateStandings() {
@@ -234,24 +192,18 @@
         matches.filter(m => m.id <= 6).forEach(m => {
             if (m.score_h !== null && m.score_a !== null) {
                 const h = stats.find(s => s.id === m.home_id), a = stats.find(s => s.id === m.away_id);
-                h.sg += (m.score_h - m.score_a); a.sg += (m.score_a - m.score_h);
+                if(h && a) { h.sg += (m.score_h - m.score_a); a.sg += (m.score_a - m.score_h);
                 if (m.score_h > m.score_a) { h.pts += 3; h.v += 1; }
                 else if (m.score_h < m.score_a) { a.pts += 3; a.v += 1; }
-                else { h.pts += 1; a.pts += 1; }
+                else { h.pts += 1; a.pts += 1; } }
             }
         });
-        
-        // CRITÉRIOS DE DESEMPATE: 
-        // 1. Pontos (pts)
-        // 2. Número de Vitórias (v)
-        // 3. Saldo de Gols (sg)
         return stats.sort((a,b) => b.pts - a.pts || b.v - a.v || b.sg - a.sg);
     }
 
     function getWinner(m) {
-        if(m.score_h > m.score_a) return players.find(p => p.id === m.home_id).time;
-        if(m.score_a > m.score_h) return players.find(p => p.id === m.away_id).time;
-        return "NOS PÊNALTIS";
+        const h = players.find(p => p.id === m.home_id), a = players.find(p => p.id === m.away_id);
+        return m.score_h > m.score_a ? h.time : (m.score_a > m.score_h ? a.time : "EMPATE");
     }
 
     async function goFinal() {
@@ -261,9 +213,15 @@
     }
 
     async function resetAll() {
-        if(confirm("Reiniciar todo o campeonato e zerar os dados?")) {
-            await _supabase.from('jogadores').update({ nome: '', time: '', logo: '' }).neq('id', 999);
-            await _supabase.from('partidas').update({ score_h: null, score_a: null, home_id: null, away_id: null }).neq('id', 100);
+        if(confirm("Deseja salvar o campeão no Hall da Fama e resetar?")) {
+            const final = matches.find(m => m.id === 7);
+            if(final && final.score_h !== null) {
+                const winId = final.score_h > final.score_a ? final.home_id : (final.score_a > final.score_h ? final.away_id : null);
+                const champ = players.find(p => p.id === winId);
+                if(champ) await _supabase.from('hall_da_fama').insert({ vencedor_nome: champ.nome, vencedor_time: champ.time, vencedor_logo: champ.logo });
+            }
+            await _supabase.from('jogadores').update({ nome: '', time: '', logo: '' }).in('id', [0,1,2]);
+            await _supabase.from('partidas').update({ score_h: null, score_a: null, home_id: null, away_id: null }).in('id', [1,2,3,4,5,6,7]);
             location.reload();
         }
     }
