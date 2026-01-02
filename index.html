@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Triangular FC 26</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #00f2ff; --secondary: #7000ff; --bg: #05070a; --card: rgba(255, 255, 255, 0.05); --text: #ffffff; --gold: #ffcf4d; }
@@ -17,7 +18,7 @@
 
         .card { background: var(--card); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 28px; padding: 20px; margin-bottom: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
         
-        /* Setup com melhor espaçamento */
+        /* Setup inputs */
         .setup-player { margin-bottom: 45px; padding-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .setup-player:last-of-type { border-bottom: none; margin-bottom: 10px; }
         .setup-player label { display: block; font-weight: 800; font-size: 0.9rem; color: var(--primary); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px; }
@@ -25,48 +26,30 @@
         .input-name { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid #333; color: white; padding: 16px; border-radius: 16px; font-size: 1rem; margin-bottom: 15px; outline: none; transition: 0.3s; }
         .input-name:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
 
+        /* Seleção de Times (Filtro PB -> Colorido) */
         .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         .team-opt { background: rgba(255,255,255,0.03); border: 2px solid transparent; border-radius: 20px; padding: 15px 5px; text-align: center; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
-        /* --- IMAGENS DE SELEÇÃO (LÓGICA DO FILTRO) --- */
         .team-opt img { 
-            width: 70px; 
-            height: 70px; 
-            object-fit: contain; 
-            filter: grayscale(100%); 
-            opacity: 0.5; 
-            background-color: transparent !important; 
-            transition: 0.3s; 
+            width: 70px; height: 70px; object-fit: contain; 
+            filter: grayscale(100%); opacity: 0.5; 
+            background-color: transparent !important; transition: 0.3s; 
         }
-        
         .team-opt span { display: block; font-size: 0.65rem; margin-top: 8px; color: #777; font-weight: 600; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; width: 100%; }
         
         .team-opt.selected { border-color: var(--primary); background: rgba(0, 242, 255, 0.12); transform: translateY(-3px); }
-        .team-opt.selected img { 
-            filter: grayscale(0%); 
-            opacity: 1; 
-            transform: scale(1.1); 
-        }
+        .team-opt.selected img { filter: grayscale(0%); opacity: 1; transform: scale(1.1); }
         .team-opt.selected span { color: white; }
 
-        /* Tabela Responsiva */
+        /* Tabela */
         .table-pro { width: 100%; border-collapse: collapse; }
         .table-pro th { font-size: 0.7rem; color: #666; padding: 10px 5px; text-align: center; text-transform: uppercase; }
         .table-pro td { padding: 15px 5px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.95rem; }
-        
         .team-cell { display: flex; align-items: center; gap: 15px; text-align: left !important; font-weight: 800; }
-        
-        /* Imagens na Tabela */
-        .team-cell img { 
-            width: 50px; 
-            height: 50px; 
-            object-fit: contain; 
-            background-color: transparent !important;
-        }
-        
+        .team-cell img { width: 50px; height: 50px; object-fit: contain; background-color: transparent !important; }
         .team-cell small { font-weight: 400; color: #666; font-size: 0.7rem; display: block; line-height: 1; margin-top: 4px; }
 
-        /* Partidas Mobile-First */
+        /* Partidas */
         .match-item { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .m-name { flex: 1; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; }
         .score-wrap { display: flex; align-items: center; gap: 6px; background: #000; padding: 6px 10px; border-radius: 14px; border: 1px solid #222; margin: 0 10px; }
@@ -77,11 +60,41 @@
         .hidden { display: none !important; }
         
         #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 50px; font-weight: 800; display: none; z-index: 10000; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+
+        /* --- TELA DE CAMPEÃO (NOVO) --- */
+        #champion-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            z-index: 9999; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .champ-logo { width: 180px; height: 180px; object-fit: contain; margin-bottom: 20px; animation: pulse 2s infinite; background: transparent !important; filter: drop-shadow(0 0 30px var(--gold)); }
+        
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        .champ-title { color: var(--gold); font-size: 1.5rem; letter-spacing: 4px; margin-bottom: 5px; text-transform: uppercase; }
+        .champ-name { font-size: 2.5rem; font-weight: 900; color: white; margin-bottom: 40px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <div id="toast"></div>
+
+<div id="champion-overlay" class="hidden">
+    <div style="color:var(--gold); font-size:4rem; margin-bottom:10px;">👑</div>
+    <div class="champ-title">CAMPEÃO DA COPA</div>
+    <img id="champ-img" src="" class="champ-logo">
+    <div id="champ-team-name" class="champ-name">TIME</div>
+    <div style="font-size:1rem; color:#aaa; margin-bottom:40px" id="champ-player-name">JOGADOR</div>
+    
+    <button class="btn-main" style="background:var(--gold); color:black; width: 80%; max-width: 300px;" onclick="saveToHallAndReset()">
+        ETERNIZAR NO HALL DA FAMA ➔
+    </button>
+</div>
 
 <div class="container">
     <header><h1>Triangular FC 26</h1></header>
@@ -102,6 +115,7 @@
         <div id="final-btn-area" class="hidden">
             <button class="btn-main" style="background:var(--gold); color:black; margin-bottom:25px" onclick="goFinal()">🔥 JOGAR GRANDE FINAL</button>
         </div>
+        
         <div id="final-match-area"></div>
 
         <div class="card">
@@ -112,8 +126,8 @@
             <h4 style="margin:0 0 15px 0; color:var(--gold); font-size: 0.8rem; letter-spacing: 2px;">🏆 HALL DA FAMA</h4>
             <div id="hall-list"></div>
         </div>
-
-        <button onclick="resetAll()" style="background:none; border:none; color:#333; width:100%; margin-top:30px; cursor:pointer; font-weight:800; font-size:0.7rem; text-transform:uppercase; letter-spacing:1px">REINICIAR DATABASE</button>
+        
+        <button onclick="forceReset()" style="background:none; border:none; color:#333; width:100%; margin-top:30px; cursor:pointer; font-weight:800; font-size:0.7rem; text-transform:uppercase; letter-spacing:1px">RESETAR DB (SEM SALVAR)</button>
     </div>
 </div>
 
@@ -144,13 +158,9 @@
     }
 
     async function init() {
-        // Carrega jogadores
         const { data } = await _supabase.from('jogadores').select('*').order('id');
         players = data || [];
-        
-        // Verifica se precisa de setup (se não tiver nome ou time)
         const needsSetup = !players.length || players.some(p => !p.nome || p.nome.trim() === "");
-        
         if (needsSetup) renderSetup();
         else loadDashboard();
     }
@@ -181,9 +191,6 @@
     async function confirmSetup() {
         if(selectedTeams.includes(null)) return alert("Todos os jogadores devem escolher um time!");
         
-        showToast("Gerando Campeonato...", false);
-
-        // 1. Atualiza Jogadores
         const playerUpdates = [0,1,2].map(i => ({
             id: i, nome: document.getElementById(`p${i}-name`).value || `JOGADOR ${i+1}`,
             time: selectedTeams[i].name, logo: selectedTeams[i].logo
@@ -192,20 +199,18 @@
         const { error: pError } = await _supabase.from('jogadores').upsert(playerUpdates);
         if(pError) return showToast("Erro ao criar jogadores", true);
 
-        // 2. CRIA AS PARTIDAS (A CORREÇÃO PRINCIPAL)
-        // Gera os confrontos do triangular (Ida e Volta + Final Vazia)
+        // Gera as partidas (Triangular Ida e Volta + Final vazia)
         const fixtures = [
-            { id: 1, home_id: 0, away_id: 1, score_h: null, score_a: null }, // J1 vs J2
-            { id: 2, home_id: 0, away_id: 2, score_h: null, score_a: null }, // J1 vs J3
-            { id: 3, home_id: 1, away_id: 2, score_h: null, score_a: null }, // J2 vs J3
-            { id: 4, home_id: 1, away_id: 0, score_h: null, score_a: null }, // J2 vs J1 (Volta)
-            { id: 5, home_id: 2, away_id: 0, score_h: null, score_a: null }, // J3 vs J1 (Volta)
-            { id: 6, home_id: 2, away_id: 1, score_h: null, score_a: null }, // J3 vs J2 (Volta)
-            { id: 7, home_id: null, away_id: null, score_h: null, score_a: null } // Final
+            { id: 1, home_id: 0, away_id: 1, score_h: null, score_a: null },
+            { id: 2, home_id: 0, away_id: 2, score_h: null, score_a: null },
+            { id: 3, home_id: 1, away_id: 2, score_h: null, score_a: null },
+            { id: 4, home_id: 1, away_id: 0, score_h: null, score_a: null },
+            { id: 5, home_id: 2, away_id: 0, score_h: null, score_a: null },
+            { id: 6, home_id: 2, away_id: 1, score_h: null, score_a: null },
+            { id: 7, home_id: null, away_id: null, score_h: null, score_a: null }
         ];
 
         const { error: mError } = await _supabase.from('partidas').upsert(fixtures);
-
         if(!mError) location.reload();
         else showToast("Erro ao gerar partidas", true);
     }
@@ -240,47 +245,119 @@
         const h = document.getElementById(`h-${id}`).value;
         const a = document.getElementById(`a-${id}`).value;
         const { error } = await _supabase.from('partidas').update({ score_h: h===""?null:parseInt(h), score_a: a===""?null:parseInt(a) }).eq('id', id);
-        if(!error) { showToast("Placar Salvo!"); syncData(); }
+        if(!error) { 
+            showToast("Placar Salvo!"); 
+            syncData(); 
+        }
     }
 
     function renderDashboard() {
         if(!players.length || !players[0].nome) return;
         
-        // Render Tabela
         const sorted = calculateStandings();
         document.getElementById('standings-body').innerHTML = sorted.map((p, i) => `
             <tr><td class="team-cell"><img src="${p.logo}"><div>${p.time}<br><small>${p.nome}</small></div></td>
             <td style="color:var(--primary); font-weight:800">${p.pts}</td><td>${p.v}</td><td>${p.sg}</td></tr>`).join('');
 
-        // Render Partidas 1 a 6
         const group = matches.filter(m => m.id <= 6);
         document.getElementById('matches-list').innerHTML = group.map(m => renderMatchCard(m)).join('');
         
-        // Verifica se habilita final (se todos os jogos tiverem placar)
         const allPlayed = group.every(m => m.score_h !== null && m.score_a !== null);
-        if(allPlayed) document.getElementById('final-btn-area').classList.remove('hidden');
-        else document.getElementById('final-btn-area').classList.add('hidden');
+        document.getElementById('final-btn-area').className = allPlayed ? '' : 'hidden';
 
-        // Render Final (ID 7)
         const final = matches.find(m => m.id === 7);
         if(final && final.home_id !== null) {
             const h = players.find(p => p.id === final.home_id), a = players.find(p => p.id === final.away_id);
-            if(h && a) document.getElementById('final-match-area').innerHTML = `
+            if(h && a) {
+                document.getElementById('final-match-area').innerHTML = `
                 <div class="card" style="border:1px solid var(--gold); background: rgba(255,207,77,0.03)">
                 <div style="text-align:center; color:var(--gold); font-weight:800; font-size:0.7rem; margin-bottom:10px; letter-spacing:2px">GRAND FINAL</div>
-                ${renderMatchCard(final)}${final.score_h !== null ? `<div style="text-align:center; padding-top:15px; color:var(--gold); font-weight:900; font-size:1.2rem">👑 ${getWinner(final)} CAMPEÃO</div>` : ''}</div>`;
+                ${renderMatchCard(final)}
+                </div>`;
+            }
+
+            // CHECKPOINT DO CAMPEÃO: Se a final tem placar, mostra a animação
+            if(final.score_h !== null && final.score_a !== null) {
+                const winnerId = final.score_h > final.score_a ? final.home_id : (final.score_a > final.score_h ? final.away_id : null);
+                if(winnerId !== null) {
+                    triggerChampionAnimation(players.find(p => p.id === winnerId));
+                }
+            }
         } else {
             document.getElementById('final-match-area').innerHTML = '';
         }
     }
 
+    // --- FUNÇÕES DA CELEBRAÇÃO ---
+    
+    let celebrationShown = false; // Evita loop infinito de confete
+
+    function triggerChampionAnimation(champ) {
+        if(celebrationShown) return; // Se já mostrou, não mostra de novo até resetar
+        celebrationShown = true;
+
+        // Preenche o Overlay
+        document.getElementById('champ-img').src = champ.logo;
+        document.getElementById('champ-team-name').innerText = champ.time;
+        document.getElementById('champ-player-name').innerText = champ.nome;
+        
+        // Exibe o Overlay
+        document.getElementById('champion-overlay').classList.remove('hidden');
+
+        // Solta Confetes (Efeito Duração 3 segundos)
+        var duration = 3000;
+        var end = Date.now() + duration;
+
+        (function frame() {
+            confetti({
+                particleCount: 5,
+                angle: 60, spread: 55, origin: { x: 0 },
+                colors: ['#00f2ff', '#7000ff', '#ffcf4d']
+            });
+            confetti({
+                particleCount: 5,
+                angle: 120, spread: 55, origin: { x: 1 },
+                colors: ['#00f2ff', '#7000ff', '#ffcf4d']
+            });
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        }());
+    }
+
+    async function saveToHallAndReset() {
+        const final = matches.find(m => m.id === 7);
+        if(!final || final.score_h === null) return;
+
+        const winId = final.score_h > final.score_a ? final.home_id : (final.score_a > final.score_h ? final.away_id : null);
+        const champ = players.find(p => p.id === winId);
+        
+        if(champ) {
+            await _supabase.from('hall_da_fama').insert({ 
+                vencedor_nome: champ.nome, 
+                vencedor_time: champ.time, 
+                vencedor_logo: champ.logo 
+            });
+        }
+        
+        // Reseta tudo
+        await _supabase.from('jogadores').update({ nome: null, time: null, logo: null }).in('id', [0,1,2]);
+        await _supabase.from('partidas').update({ score_h: null, score_a: null, home_id: null, away_id: null }).in('id', [1,2,3,4,5,6,7]);
+        
+        location.reload();
+    }
+
+    async function forceReset() {
+        if(confirm("Isso apagará tudo sem salvar no Hall. Tem certeza?")) {
+            await _supabase.from('jogadores').update({ nome: null, time: null, logo: null }).in('id', [0,1,2]);
+            await _supabase.from('partidas').update({ score_h: null, score_a: null, home_id: null, away_id: null }).in('id', [1,2,3,4,5,6,7]);
+            location.reload();
+        }
+    }
+
     function renderMatchCard(m) {
-        // Encontra os times pelo ID
         const h = players.find(p => p.id === m.home_id), a = players.find(p => p.id === m.away_id);
-        
-        // Se não achar os times (ex: banco vazio ou erro), não mostra o card
         if(!h || !a) return `<div style="text-align:center; padding:10px; color:#666;">Aguardando definição...</div>`;
-        
         return `<div class="match-item">
             <div class="m-name" style="text-align:right">${h.time}</div>
             <div class="score-wrap">
@@ -307,35 +384,14 @@
         return stats.sort((a,b) => b.pts - a.pts || b.v - a.v || b.sg - a.sg);
     }
 
-    function getWinner(m) {
-        const h = players.find(p => p.id === m.home_id), a = players.find(p => p.id === m.away_id);
-        return m.score_h > m.score_a ? h.time : (m.score_a > m.score_h ? a.time : "EMPATE");
-    }
+    function getWinner(m) { return m.score_h > m.score_a ? "CASA" : "VISITANTE"; } // Placeholder, lógica real na animação
 
     async function goFinal() {
         const s = calculateStandings();
-        // Define os finalistas no banco (ID 7)
         await _supabase.from('partidas').update({ home_id: s[0].id, away_id: s[1].id, score_h: null, score_a: null }).eq('id', 7);
         syncData();
     }
 
-    async function resetAll() {
-        if(confirm("Deseja salvar o campeão e resetar o banco?")) {
-            const final = matches.find(m => m.id === 7);
-            if(final && final.score_h !== null) {
-                const winId = final.score_h > final.score_a ? final.home_id : (final.score_a > final.score_h ? final.away_id : null);
-                const champ = players.find(p => p.id === winId);
-                if(champ) await _supabase.from('hall_da_fama').insert({ vencedor_nome: champ.nome, vencedor_time: champ.time, vencedor_logo: champ.logo });
-            }
-            
-            // Reseta jogadores para null
-            await _supabase.from('jogadores').update({ nome: null, time: null, logo: null }).in('id', [0,1,2]);
-            // Reseta partidas para null
-            await _supabase.from('partidas').update({ score_h: null, score_a: null, home_id: null, away_id: null }).in('id', [1,2,3,4,5,6,7]);
-            
-            location.reload();
-        }
-    }
     init();
 </script>
 </body>
