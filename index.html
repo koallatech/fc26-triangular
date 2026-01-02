@@ -30,23 +30,22 @@
         
         /* --- IMAGENS DE SELEÇÃO (LÓGICA DO FILTRO) --- */
         .team-opt img { 
-            width: 70px; /* Grande para facilitar a visualização */
+            width: 70px; 
             height: 70px; 
             object-fit: contain; 
-            filter: grayscale(100%); /* Padrão: Preto e Branco */
-            opacity: 0.5; /* Padrão: Meio apagado */
-            background-color: transparent !important; /* Fundo transparente */
+            filter: grayscale(100%); 
+            opacity: 0.5; 
+            background-color: transparent !important; 
             transition: 0.3s; 
         }
         
         .team-opt span { display: block; font-size: 0.65rem; margin-top: 8px; color: #777; font-weight: 600; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; width: 100%; }
         
-        /* --- ESTADO SELECIONADO --- */
         .team-opt.selected { border-color: var(--primary); background: rgba(0, 242, 255, 0.12); transform: translateY(-3px); }
         .team-opt.selected img { 
-            filter: grayscale(0%); /* Remove o efeito PB (Fica colorido) */
-            opacity: 1; /* Opacidade total */
-            transform: scale(1.1); /* Leve zoom */
+            filter: grayscale(0%); 
+            opacity: 1; 
+            transform: scale(1.1); 
         }
         .team-opt.selected span { color: white; }
 
@@ -57,7 +56,7 @@
         
         .team-cell { display: flex; align-items: center; gap: 15px; text-align: left !important; font-weight: 800; }
         
-        /* Imagens na Tabela (Sempre coloridas e grandes) */
+        /* Imagens na Tabela */
         .team-cell img { 
             width: 50px; 
             height: 50px; 
@@ -145,9 +144,13 @@
     }
 
     async function init() {
+        // Carrega jogadores
         const { data } = await _supabase.from('jogadores').select('*').order('id');
         players = data || [];
+        
+        // Verifica se precisa de setup (se não tiver nome ou time)
         const needsSetup = !players.length || players.some(p => !p.nome || p.nome.trim() === "");
+        
         if (needsSetup) renderSetup();
         else loadDashboard();
     }
@@ -177,13 +180,34 @@
 
     async function confirmSetup() {
         if(selectedTeams.includes(null)) return alert("Todos os jogadores devem escolher um time!");
-        const updates = [0,1,2].map(i => ({
+        
+        showToast("Gerando Campeonato...", false);
+
+        // 1. Atualiza Jogadores
+        const playerUpdates = [0,1,2].map(i => ({
             id: i, nome: document.getElementById(`p${i}-name`).value || `JOGADOR ${i+1}`,
             time: selectedTeams[i].name, logo: selectedTeams[i].logo
         }));
-        const { error } = await _supabase.from('jogadores').upsert(updates);
-        if(!error) location.reload();
-        else showToast("Erro no Banco", true);
+        
+        const { error: pError } = await _supabase.from('jogadores').upsert(playerUpdates);
+        if(pError) return showToast("Erro ao criar jogadores", true);
+
+        // 2. CRIA AS PARTIDAS (A CORREÇÃO PRINCIPAL)
+        // Gera os confrontos do triangular (Ida e Volta + Final Vazia)
+        const fixtures = [
+            { id: 1, home_id: 0, away_id: 1, score_h: null, score_a: null }, // J1 vs J2
+            { id: 2, home_id: 0, away_id: 2, score_h: null, score_a: null }, // J1 vs J3
+            { id: 3, home_id: 1, away_id: 2, score_h: null, score_a: null }, // J2 vs J3
+            { id: 4, home_id: 1, away_id: 0, score_h: null, score_a: null }, // J2 vs J1 (Volta)
+            { id: 5, home_id: 2, away_id: 0, score_h: null, score_a: null }, // J3 vs J1 (Volta)
+            { id: 6, home_id: 2, away_id: 1, score_h: null, score_a: null }, // J3 vs J2 (Volta)
+            { id: 7, home_id: null, away_id: null, score_h: null, score_a: null } // Final
+        ];
+
+        const { error: mError } = await _supabase.from('partidas').upsert(fixtures);
+
+        if(!mError) location.reload();
+        else showToast("Erro ao gerar partidas", true);
     }
 
     async function loadDashboard() {
@@ -221,15 +245,23 @@
 
     function renderDashboard() {
         if(!players.length || !players[0].nome) return;
+        
+        // Render Tabela
         const sorted = calculateStandings();
         document.getElementById('standings-body').innerHTML = sorted.map((p, i) => `
             <tr><td class="team-cell"><img src="${p.logo}"><div>${p.time}<br><small>${p.nome}</small></div></td>
             <td style="color:var(--primary); font-weight:800">${p.pts}</td><td>${p.v}</td><td>${p.sg}</td></tr>`).join('');
 
+        // Render Partidas 1 a 6
         const group = matches.filter(m => m.id <= 6);
         document.getElementById('matches-list').innerHTML = group.map(m => renderMatchCard(m)).join('');
-        if(group.filter(m => m.score_h !== null).length >= 6) document.getElementById('final-btn-area').classList.remove('hidden');
+        
+        // Verifica se habilita final (se todos os jogos tiverem placar)
+        const allPlayed = group.every(m => m.score_h !== null && m.score_a !== null);
+        if(allPlayed) document.getElementById('final-btn-area').classList.remove('hidden');
+        else document.getElementById('final-btn-area').classList.add('hidden');
 
+        // Render Final (ID 7)
         const final = matches.find(m => m.id === 7);
         if(final && final.home_id !== null) {
             const h = players.find(p => p.id === final.home_id), a = players.find(p => p.id === final.away_id);
@@ -237,12 +269,18 @@
                 <div class="card" style="border:1px solid var(--gold); background: rgba(255,207,77,0.03)">
                 <div style="text-align:center; color:var(--gold); font-weight:800; font-size:0.7rem; margin-bottom:10px; letter-spacing:2px">GRAND FINAL</div>
                 ${renderMatchCard(final)}${final.score_h !== null ? `<div style="text-align:center; padding-top:15px; color:var(--gold); font-weight:900; font-size:1.2rem">👑 ${getWinner(final)} CAMPEÃO</div>` : ''}</div>`;
+        } else {
+            document.getElementById('final-match-area').innerHTML = '';
         }
     }
 
     function renderMatchCard(m) {
+        // Encontra os times pelo ID
         const h = players.find(p => p.id === m.home_id), a = players.find(p => p.id === m.away_id);
-        if(!h || !a) return '';
+        
+        // Se não achar os times (ex: banco vazio ou erro), não mostra o card
+        if(!h || !a) return `<div style="text-align:center; padding:10px; color:#666;">Aguardando definição...</div>`;
+        
         return `<div class="match-item">
             <div class="m-name" style="text-align:right">${h.time}</div>
             <div class="score-wrap">
@@ -276,6 +314,7 @@
 
     async function goFinal() {
         const s = calculateStandings();
+        // Define os finalistas no banco (ID 7)
         await _supabase.from('partidas').update({ home_id: s[0].id, away_id: s[1].id, score_h: null, score_a: null }).eq('id', 7);
         syncData();
     }
@@ -288,8 +327,12 @@
                 const champ = players.find(p => p.id === winId);
                 if(champ) await _supabase.from('hall_da_fama').insert({ vencedor_nome: champ.nome, vencedor_time: champ.time, vencedor_logo: champ.logo });
             }
+            
+            // Reseta jogadores para null
             await _supabase.from('jogadores').update({ nome: null, time: null, logo: null }).in('id', [0,1,2]);
+            // Reseta partidas para null
             await _supabase.from('partidas').update({ score_h: null, score_a: null, home_id: null, away_id: null }).in('id', [1,2,3,4,5,6,7]);
+            
             location.reload();
         }
     }
